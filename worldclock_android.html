@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clocks</title>
+<style>
+:root{
+  --bg:#0B0C0E; --card:#141519; --card-border:#232529;
+  --text-primary:#F0EFEA; --text-secondary:#A9A9A6; --text-tertiary:#6E6E6C;
+  --green-bg:#0E3A2E; --green-fg:#8FE3C4;
+  --blue-bg:#0C2E4D; --blue-fg:#9CC7F2;
+  --amber-bg:#4A2E06; --amber-fg:#F5C878;
+  --neutral-bg:#26272B; --neutral-fg:#C9C8C3;
+  --red-bg:#3F1712; --red-fg:#F0A08E;
+  --accent:#E8703A;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:"JetBrains Mono","SF Mono",ui-monospace,Menlo,monospace;color:var(--text-primary);padding:20px 16px 30px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:440px;margin:0 auto}
+.hdr{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+.hdr h1{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-tertiary);font-weight:500;margin:0}
+.hdr .date{font-size:11px;color:var(--text-tertiary)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:360px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:13px 14px;position:relative}
+.card .badge{position:absolute;top:12px;right:12px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:20px;font-weight:600}
+.badge-me{background:var(--neutral-bg);color:var(--neutral-fg)}
+.badge-official{background:var(--green-bg);color:var(--green-fg)}
+.badge-agency{background:var(--amber-bg);color:var(--amber-fg)}
+.badge-client{background:var(--blue-bg);color:var(--blue-fg)}
+.card .place{font-size:11px;color:var(--text-tertiary);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}
+.card .time{font-size:28px;font-weight:600;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.card .sub{font-size:11px;color:var(--text-secondary);margin-top:4px}
+.bar-wrap{margin-top:14px;background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:13px 14px}
+.bar-title{font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.row{display:grid;grid-template-columns:62px 1fr;align-items:center;gap:8px;margin-bottom:8px;font-size:11px}
+.row:last-child{margin-bottom:0}
+.row .lbl{color:var(--text-secondary)}
+.track{position:relative;height:8px;background:#1D1E22;border-radius:4px;overflow:hidden}
+.seg{position:absolute;top:0;bottom:0;background:var(--accent);opacity:.85}
+.seg-me{background:#6E6E9E}
+.seg-quiet{background:#3F1712;opacity:.9}
+.now-line{position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff;box-shadow:0 0 4px #fff;z-index:2}
+.status{margin-top:14px;border-radius:14px;padding:12px 14px;font-size:12px;line-height:1.5;border:1px solid var(--card-border)}
+.status.on{background:var(--green-bg);color:var(--green-fg)}
+.status.quiet{background:var(--red-bg);color:var(--red-fg)}
+.status.off{background:var(--card);color:var(--text-secondary)}
+.meta{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:360px){.meta{grid-template-columns:1fr}}
+.meta .card{padding:12px 14px}
+.m-lbl{font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.m-val{font-size:13px;color:var(--text-primary);line-height:1.4}
+.m-sub{font-size:11px;color:var(--text-secondary);margin-top:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <h1>Clocks</h1>
+    <div class="date" id="dateline">—</div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="badge badge-me">Me</div>
+      <div class="place">Thailand</div>
+      <div class="time" id="t-th">--:--</div>
+      <div class="sub">ICT · never shifts</div>
+    </div>
+    <div class="card">
+      <div class="badge badge-official">Official</div>
+      <div class="place">Auckland</div>
+      <div class="time" id="t-nz">--:--</div>
+      <div class="sub" id="nz-zone">—</div>
+    </div>
+    <div class="card">
+      <div class="badge badge-agency">Mike</div>
+      <div class="place">UK</div>
+      <div class="time" id="t-uk">--:--</div>
+      <div class="sub" id="uk-zone">—</div>
+    </div>
+    <div class="card">
+      <div class="badge badge-client">MSI</div>
+      <div class="place">Boston</div>
+      <div class="time" id="t-us">--:--</div>
+      <div class="sub" id="us-zone">—</div>
+    </div>
+  </div>
+
+  <div class="status off" id="status">—</div>
+
+  <div class="bar-wrap">
+    <div class="bar-title">Boston workday 09:00&ndash;18:00 ET · red = my quiet hours (18:00&ndash;01:30 TH)</div>
+    <div class="row"><div class="lbl">Boston</div><div class="track" id="track-us"></div></div>
+    <div class="row"><div class="lbl">UK</div><div class="track" id="track-uk"></div></div>
+    <div class="row"><div class="lbl">NZ</div><div class="track" id="track-nz"></div></div>
+    <div class="row"><div class="lbl">Me</div><div class="track" id="track-th"></div></div>
+  </div>
+
+  <div class="meta">
+    <div class="card">
+      <div class="m-lbl">Next NZ holiday</div>
+      <div class="m-val" id="hol-name">—</div>
+      <div class="m-sub" id="hol-in">—</div>
+    </div>
+    <div class="card">
+      <div class="m-lbl">Auckland weather</div>
+      <div class="m-val" id="wx-temp">—</div>
+      <div class="m-sub" id="wx-desc">—</div>
+    </div>
+  </div>
+</div>
+
+<script>
+var HOLIDAYS = [
+  ['2026-07-10','Matariki'],
+  ['2026-10-26','Labour Day'],
+  ['2026-12-25','Christmas Day'],
+  ['2026-12-28','Boxing Day (obs.)'],
+  ['2027-01-01','New Year\u2019s Day'],
+  ['2027-01-04','Day after New Year\u2019s (obs.)'],
+  ['2027-02-01','Auckland Anniversary'],
+  ['2027-02-08','Waitangi Day (obs.)'],
+  ['2027-03-26','Good Friday'],
+  ['2027-03-29','Easter Monday'],
+  ['2027-04-26','Anzac Day (obs.)'],
+  ['2027-06-07','King\u2019s Birthday'],
+  ['2027-06-25','Matariki']
+];
+var WX_CODES = {0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',66:'Freezing rain',67:'Freezing rain',71:'Light snow',73:'Snow',75:'Heavy snow',80:'Showers',81:'Showers',82:'Heavy showers',85:'Snow showers',86:'Snow showers',95:'Thunderstorm',96:'Thunderstorm',99:'Thunderstorm'};
+
+function fmt(tz){
+  return new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:tz}).format(new Date());
+}
+function zoneAbbr(tz){
+  var parts = new Intl.DateTimeFormat('en-US',{timeZone:tz,timeZoneName:'short'}).formatToParts(new Date());
+  var p = parts.find(function(x){return x.type==='timeZoneName'});
+  return p ? p.value : '';
+}
+function offsetMinutes(tz){
+  var now = new Date();
+  var utcStr = now.toLocaleString('en-US',{timeZone:'UTC'});
+  var tzStr = now.toLocaleString('en-US',{timeZone:tz});
+  return (new Date(tzStr) - new Date(utcStr)) / 60000;
+}
+function localMinutes(tz){
+  var s = new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:tz}).format(new Date());
+  var p = s.split(':');
+  return parseInt(p[0])*60 + parseInt(p[1]);
+}
+function addSeg(el, startMin, lenMin, cls){
+  var widthPct = lenMin/(24*60)*100;
+  var leftPct = (((startMin/(24*60)*100) % 100) + 100) % 100;
+  function seg(l,w){
+    var s = document.createElement('div');
+    s.className = 'seg ' + cls;
+    s.style.left = l + '%'; s.style.width = w + '%';
+    el.appendChild(s);
+  }
+  if (leftPct + widthPct <= 100){ seg(leftPct, widthPct); }
+  else { seg(leftPct, 100 - leftPct); seg(0, widthPct - (100 - leftPct)); }
+}
+function drawTrack(id, tz, anchorOffset, cls, quiet){
+  var el = document.getElementById(id);
+  el.innerHTML = '';
+  var diff = (offsetMinutes(tz) - anchorOffset);
+  addSeg(el, 9*60 + diff, 9*60, cls || '');
+  if (quiet){ addSeg(el, 18*60, 7.5*60, 'seg-quiet'); } // 18:00–01:30 TH local
+  var line = document.createElement('div');
+  line.className = 'now-line';
+  line.style.left = (localMinutes(tz)/(24*60)*100) + '%';
+  el.appendChild(line);
+}
+function nzToday(){
+  return new Intl.DateTimeFormat('en-CA',{timeZone:'Pacific/Auckland',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+}
+function renderHoliday(){
+  var today = nzToday();
+  var next = HOLIDAYS.find(function(h){ return h[0] >= today; });
+  if(!next) return;
+  var d = new Date(next[0]+'T12:00:00');
+  var label = new Intl.DateTimeFormat('en-NZ',{weekday:'short',day:'numeric',month:'short'}).format(d);
+  document.getElementById('hol-name').textContent = next[1];
+  var days = Math.round((new Date(next[0]) - new Date(today))/86400000);
+  document.getElementById('hol-in').textContent = label + (days === 0 ? ' · today' : days === 1 ? ' · tomorrow' : ' · in ' + days + ' days');
+}
+function renderStatus(){
+  var thMin = localMinutes('Asia/Bangkok');
+  var el = document.getElementById('status');
+  el.classList.remove('on','quiet','off');
+  if (thMin >= 4*60 && thMin < 13*60){
+    el.classList.add('on');
+    el.textContent = 'Work window — on the clock until 13:00.';
+  } else if (thMin >= 18*60 || thMin < 90){
+    el.classList.add('quiet');
+    el.textContent = 'Quiet hours — work channels read-only. It\u2019s the middle of the night in Auckland.';
+  } else {
+    el.classList.add('off');
+    el.textContent = 'Off the clock. Async replies fine — timestamps land in NZ business hours.';
+  }
+}
+var wxLoaded = 0;
+function renderWeather(){
+  var now = Date.now();
+  if (now - wxLoaded < 15*60*1000) return; // refresh every 15 min
+  wxLoaded = now;
+  fetch('https://api.open-meteo.com/v1/forecast?latitude=-36.85&longitude=174.76&current=temperature_2m,weather_code&timezone=Pacific%2FAuckland')
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      var t = Math.round(j.current.temperature_2m);
+      var code = j.current.weather_code;
+      document.getElementById('wx-temp').textContent = t + '\u00B0C';
+      document.getElementById('wx-desc').textContent = WX_CODES[code] || 'Code ' + code;
+    })
+    .catch(function(){
+      document.getElementById('wx-temp').textContent = '—';
+      document.getElementById('wx-desc').textContent = 'Offline';
+    });
+}
+function render(){
+  document.getElementById('t-th').textContent = fmt('Asia/Bangkok');
+  document.getElementById('t-nz').textContent = fmt('Pacific/Auckland');
+  document.getElementById('t-uk').textContent = fmt('Europe/London');
+  document.getElementById('t-us').textContent = fmt('America/New_York');
+  document.getElementById('nz-zone').textContent = zoneAbbr('Pacific/Auckland');
+  document.getElementById('uk-zone').textContent = zoneAbbr('Europe/London');
+  document.getElementById('us-zone').textContent = zoneAbbr('America/New_York');
+  document.getElementById('dateline').textContent = new Intl.DateTimeFormat('en-GB',{weekday:'short',day:'2-digit',month:'short',timeZone:'Asia/Bangkok'}).format(new Date());
+  var anchor = offsetMinutes('America/New_York');
+  drawTrack('track-us','America/New_York',anchor,'',false);
+  drawTrack('track-uk','Europe/London',anchor,'',false);
+  drawTrack('track-nz','Pacific/Auckland',anchor,'',false);
+  drawTrack('track-th','Asia/Bangkok',anchor,'seg-me',true);
+  renderHoliday();
+  renderStatus();
+  renderWeather();
+}
+render();
+setInterval(render, 30000);
+</script>
+</body>
+</html>
